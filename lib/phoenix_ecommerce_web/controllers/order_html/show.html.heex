@@ -1,7 +1,7 @@
 <.header>
   Thank you for your order!
   <:subtitle>
-    <strong>User uuid: </strong><%=@order.user_uuid %>
+    <strong>User: </strong><%=@order.user.email %>
   </:subtitle>
 </.header>
 
@@ -9,11 +9,11 @@
   <:col :let={item} label="Title"><%= item.product.title %></:col>
   <:col :let={item} label="Quantity"><%= item.quantity %></:col>
   <:col :let={item} label="Price">
-    <%= PhoenixEcommerceWeb.CartHTML.currency_to_str(item.price) %>
+    <%= currency_to_str(item.price) %>
   </:col>
 </.table>
 
 <strong>Total Price</strong>
-<%= PhoenixEcommerceWeb.CartHTML.currency_to_str(@order.total_price) %>
+<%= currency_to_str(@order.total_price) %>
 
 <.back navigate={~p"/products"}>Back to products</.back>

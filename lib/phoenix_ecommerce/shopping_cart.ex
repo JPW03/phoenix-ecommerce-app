@@ -8,6 +8,8 @@ defmodule PhoenixEcommerce.ShoppingCart do
 
   alias PhoenixEcommerce.Catalog
   alias PhoenixEcommerce.ShoppingCart.{Cart, CartItem}
+  alias PhoenixEcommerce.Accounts
+  alias PhoenixEcommerce.Accounts.User
 
   @doc """
   Returns the list of carts.
@@ -38,17 +40,45 @@ defmodule PhoenixEcommerce.ShoppingCart do
   """
   def get_cart!(id), do: Repo.get!(Cart, id)
 
-  def get_cart_by_user_uuid(user_uuid) do
+  def get_cart_by_user_token(user_token) do
+    %{"id" => user_id} = Accounts.get_user_by_session_token(user_token)
+
     Repo.one(
       from(c in Cart,
-        where: c.user_uuid == ^user_uuid,
+        where: c.user_id == ^user_id,
         left_join: i in assoc(c, :items),
         left_join: p in assoc(i, :product),
+        left_join: u in assoc(c, :user),
         order_by: [asc: i.inserted_at],
-        preload: [items: {i, product: p}]
+        preload: [items: {i, product: p}, user: u]
       )
     )
   end
+
+  def get_cart_by_user(%User{} = user) do
+    Repo.one(
+      from(c in Cart,
+        where: c.user_id == ^user.id,
+        left_join: i in assoc(c, :items),
+        left_join: p in assoc(i, :product),
+        left_join: u in assoc(c, :user),
+        order_by: [asc: i.inserted_at],
+        preload: [items: {i, product: p}, user: u]
+      )
+    )
+  end
+
+  # def get_cart_by_user_id(user_id) do
+  #   Repo.one(
+  #     from(c in Cart,
+  #       where: c.user_id == ^user_id,
+  #       left_join: i in assoc(c, :items),
+  #       left_join: p in assoc(i, :product),
+  #       order_by: [asc: i.inserted_at],
+  #       preload: [items: {i, product: p}]
+  #     )
+  #   )
+  # end
 
   @doc """
   Creates a cart.
@@ -62,9 +92,10 @@ defmodule PhoenixEcommerce.ShoppingCart do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_cart(user_uuid) do
-    %Cart{user_uuid: user_uuid}
+  def create_cart(%User{} = user) do
+    %Cart{}
     |> Cart.changeset(%{})
+    |> Ecto.Changeset.put_assoc(:user, user)
     |> Repo.insert()
     |> case do
       {:ok, cart} -> {:ok, reload_cart(cart)}
@@ -72,7 +103,7 @@ defmodule PhoenixEcommerce.ShoppingCart do
     end
   end
 
-  defp reload_cart(%Cart{} = cart), do: get_cart_by_user_uuid(cart.user_uuid)
+  defp reload_cart(%Cart{} = cart), do: get_cart_by_user(cart.user)
 
 
   def add_item_to_cart(%Cart{} = cart, product_id) do

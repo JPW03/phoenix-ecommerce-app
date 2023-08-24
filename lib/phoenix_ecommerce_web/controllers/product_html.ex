@@ -1,6 +1,8 @@
 defmodule PhoenixEcommerceWeb.ProductHTML do
   use PhoenixEcommerceWeb, :html
 
+  import PhoenixEcommerce.Catalog, only: [currency_to_str: 1]
+
   def category_opts(changeset) do
     existing_ids = changeset
     |> Ecto.Changeset.get_change(:categories, [])

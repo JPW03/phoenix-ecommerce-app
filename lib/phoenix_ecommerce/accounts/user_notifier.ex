@@ -8,7 +8,7 @@ defmodule PhoenixEcommerce.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"PhoenixEcommerce", "contact@example.com"})
+      |> from({"PhoenixEcommerce", "contact@phoenixecommerce.com"})
       |> subject(subject)
       |> text_body(body)
 

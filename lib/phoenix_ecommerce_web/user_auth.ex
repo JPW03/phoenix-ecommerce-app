@@ -91,6 +91,7 @@ defmodule PhoenixEcommerceWeb.UserAuth do
   def fetch_current_user(conn, _opts) do
     {user_token, conn} = ensure_user_token(conn)
     user = user_token && Accounts.get_user_by_session_token(user_token)
+    IO.inspect user
     assign(conn, :current_user, user)
   end
 
@@ -195,13 +196,34 @@ defmodule PhoenixEcommerceWeb.UserAuth do
 
   @doc """
   Used for routes that require the user to be authenticated.
-
-  If you want to enforce the user email is confirmed before
-  they use the application at all, here would be a good place.
   """
   def require_authenticated_user(conn, _opts) do
     if conn.assigns[:current_user] do
       conn
+    else
+      conn
+      |> put_flash(:error, "You must log in to access this page.")
+      |> maybe_store_return_to()
+      |> redirect(to: ~p"/users/log_in")
+      |> halt()
+    end
+  end
+
+  @doc """
+  Used for routes that require the user to be authenticated
+  and that they have acknowldged their confirmation email.
+  """
+  def require_authenticated_confirmed_user(conn, _opts) do
+    if current_user = conn.assigns[:current_user] do
+      if current_user.confirmed_at do
+        conn
+      else
+        conn
+        |> put_flash(:error, "Your account must be confirmed to access this page. Check your email for the confirmation link.")
+        |> maybe_store_return_to()
+        |> redirect(to: ~p"/")
+        |> halt()
+      end
     else
       conn
       |> put_flash(:error, "You must log in to access this page.")

@@ -4,7 +4,8 @@ defmodule PhoenixEcommerce.Orders.Order do
 
   schema "orders" do
     field :total_price, :decimal
-    field :user_uuid, Ecto.UUID
+
+    belongs_to :user, PhoenixEcommerce.Accounts.User
 
     has_many :line_items, PhoenixEcommerce.Orders.LineItem
     has_many :products, through: [:line_items, :product]
@@ -16,7 +17,7 @@ defmodule PhoenixEcommerce.Orders.Order do
   @doc false
   def changeset(order, attrs) do
     order
-    |> cast(attrs, [:user_uuid, :total_price])
-    |> validate_required([:user_uuid, :total_price])
+    |> cast(attrs, [:total_price])
+    |> validate_required([:total_price])
   end
 end

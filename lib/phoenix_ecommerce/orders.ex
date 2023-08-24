@@ -11,6 +11,8 @@ defmodule PhoenixEcommerce.Orders do
   alias PhoenixEcommerce.Orders.LineItem
   alias PhoenixEcommerce.ShoppingCart
 
+  alias PhoenixEcommerce.Accounts.User
+
 
   def complete_order(%ShoppingCart.Cart{} = cart) do
     # Construct line item structs using the price of the cart item (giving the price at time of purchase)
@@ -22,7 +24,7 @@ defmodule PhoenixEcommerce.Orders do
     # Construct order struct
     order =
       Ecto.Changeset.change(%Order{},
-        user_uuid: cart.user_uuid,
+        user_id: cart.user_id,
         total_price: ShoppingCart.total_cart_price(cart),
         line_items: line_items
       )
@@ -68,10 +70,15 @@ defmodule PhoenixEcommerce.Orders do
       ** (Ecto.NoResultsError)
 
   """
-  def get_order!(user_uuid, id) do
+  def get_order!(%User{} = user, id) do
     Order
-    |> Repo.get_by!(id: id, user_uuid: user_uuid)
-    |> Repo.preload([line_items: [:product]])
+    |> Repo.get_by!(id: id, user_id: user.id)
+    |> Repo.preload([line_items: [:product], user: []])
+  end
+  def get_order!(user_id, id) do
+    Order
+    |> Repo.get_by!(id: id, user_id: user_id)
+    |> Repo.preload([line_items: [:product], user: []])
   end
 
   @doc """

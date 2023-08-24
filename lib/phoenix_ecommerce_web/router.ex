@@ -11,7 +11,6 @@ defmodule PhoenixEcommerceWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_user
-    plug :fetch_current_user_uuid
     plug :fetch_current_cart
     # plug :log_session
     # plug :log_connection
@@ -27,26 +26,18 @@ defmodule PhoenixEcommerceWeb.Router do
   #   conn
   # end
 
-  defp fetch_current_user_uuid(conn, _) do
-    if user_uuid = get_session(conn, :current_uuid) do
-      assign(conn, :current_uuid, user_uuid)
-    else
-      new_uuid = Ecto.UUID.generate()
-
-      conn
-      |> assign(:current_uuid, new_uuid)
-      |> put_session(:current_uuid, new_uuid)
-    end
-  end
-
   alias PhoenixEcommerce.ShoppingCart
 
   defp fetch_current_cart(conn, _) do
-    if cart = ShoppingCart.get_cart_by_user_uuid(conn.assigns.current_uuid) do
-      assign(conn, :cart, cart)
+    if user = conn.assigns.current_user do
+      if cart = ShoppingCart.get_cart_by_user(user) do
+        assign(conn, :cart, cart)
+      else
+        {:ok, new_cart} = ShoppingCart.create_cart(user)
+        assign(conn, :cart, new_cart)
+      end
     else
-      {:ok, new_cart} = ShoppingCart.create_cart(conn.assigns.current_uuid)
-      assign(conn, :cart, new_cart)
+      conn
     end
   end
 
@@ -54,10 +45,17 @@ defmodule PhoenixEcommerceWeb.Router do
     plug :accepts, ["json"]
   end
 
+  ## Home Page
   scope "/", PhoenixEcommerceWeb do
-    pipe_through :browser
+    pipe_through [:browser]
 
     get "/", PageController, :home
+  end
+
+  ## Catalog, Shopping Cart and Orders (Log in required)
+  scope "/", PhoenixEcommerceWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
     resources "/products", ProductController
 
     resources "/cart_items", CartItemController, only: [:create, :delete]
@@ -90,8 +88,7 @@ defmodule PhoenixEcommerceWeb.Router do
     end
   end
 
-  ## Authentication routes
-
+  ## Signed-out Account Management
   scope "/", PhoenixEcommerceWeb do
     pipe_through [:browser, :redirect_if_user_is_authenticated]
 
@@ -106,6 +103,7 @@ defmodule PhoenixEcommerceWeb.Router do
     post "/users/log_in", UserSessionController, :create
   end
 
+  ## Signed-in Account Management
   scope "/", PhoenixEcommerceWeb do
     pipe_through [:browser, :require_authenticated_user]
 

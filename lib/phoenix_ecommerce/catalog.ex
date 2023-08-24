@@ -246,4 +246,9 @@ defmodule PhoenixEcommerce.Catalog do
   def change_category(%Category{} = category, attrs \\ %{}) do
     Category.changeset(category, attrs)
   end
+
+  @doc """
+  Returns a string in price format.
+  """
+  def currency_to_str(%Decimal{} = val), do: "$#{Decimal.round(val, 2)}"
 end

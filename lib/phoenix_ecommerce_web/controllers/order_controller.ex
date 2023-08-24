@@ -18,8 +18,8 @@ defmodule PhoenixEcommerceWeb.OrderController do
   end
 
   def show(conn, %{"id" => id}) do
-    order = Orders.get_order!(conn.assigns.current_uuid, id)
-    # 'get_order!' validates that the cart id must belong to the current user uuid
+    order = Orders.get_order!(conn.assigns.current_user, id)
+    # 'get_order!' validates that the cart id must belong to the current user
     render(conn, :show, order: order)
   end
 

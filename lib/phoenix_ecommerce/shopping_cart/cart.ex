@@ -3,7 +3,7 @@ defmodule PhoenixEcommerce.ShoppingCart.Cart do
   import Ecto.Changeset
 
   schema "carts" do
-    field :user_uuid, Ecto.UUID
+    belongs_to :user, PhoenixEcommerce.Accounts.User
 
     has_many :items, PhoenixEcommerce.ShoppingCart.CartItem
 
@@ -13,8 +13,7 @@ defmodule PhoenixEcommerce.ShoppingCart.Cart do
   @doc false
   def changeset(cart, attrs) do
     cart
-    |> cast(attrs, [:user_uuid])
-    |> validate_required([:user_uuid])
-    |> unique_constraint(:user_uuid)
+    |> cast(attrs, [])
+    |> validate_required([])
   end
 end
